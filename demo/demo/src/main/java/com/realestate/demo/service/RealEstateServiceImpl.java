@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 @Service
 public class RealEstateServiceImpl implements RealEstateService{
     @Autowired
@@ -31,24 +33,8 @@ public class RealEstateServiceImpl implements RealEstateService{
     @Override
     public Property updatePropertyDetails(Property property, int propertyId) {
 
-        propertyList = this.realEstateRepository.findAll();
-
-        for (Property property1:
-             propertyList) {
-            if(property1.getPropertyId() == propertyId) {
-
-                this.property.setPropertyId(propertyId);
-                this.property.setPropertyPrice(property.getPropertyPrice());
-                this.property.setPropertyAddress(property.getPropertyAddress());
-                this.property.setAreaSquareFeet(property.getAreaSquareFeet());
-                this.property.setNumberOfBathrooms(property.getNumberOfBathrooms());
-                this.property.setNumberOfBedrooms(property.getNumberOfBedrooms());
-                break;
-            }
-        }
-
+        Property updatedProperty = this.realEstateRepository.findById(propertyId).get();
         this.realEstateRepository.save(this.property);
-        propertyList = null;
         return this.property;
     }
 
@@ -61,19 +47,9 @@ public class RealEstateServiceImpl implements RealEstateService{
     @Override
     public double getAveragePriceOfProperties() {
 
-        double average = 0;
-        int totalProperties = 0;
         propertyList = this.realEstateRepository.findAll();
 
-        for (Property property1:
-             propertyList) {
-
-            average += property1.getPropertyPrice();
-            totalProperties++;
-        }
-        propertyList = null;
-
-        return average/totalProperties;
+        return propertyList.stream().mapToDouble(Property::getPropertyPrice).average().getAsDouble();
     }
 
     @Override
@@ -81,19 +57,12 @@ public class RealEstateServiceImpl implements RealEstateService{
 
         propertyList = this.realEstateRepository.findAll();
 
-        List<Property> propertyListWithRequiredBedroomsAndBathrooms = new ArrayList<>();
-
-        for (Property property1:
-             propertyList) {
-
-            if(property1.getNumberOfBedrooms() >= minBedrooms && property1.getNumberOfBathrooms() >= minBathrroms) {
-
-                propertyListWithRequiredBedroomsAndBathrooms.add(property1);
-            }
-
-        }
+        List<Property> propertyListWithRequiredBedroomsAndBathrooms = propertyList.stream()
+                .filter(property1 -> property1.getNumberOfBedrooms() >= minBedrooms && property1.getNumberOfBathrooms() >= minBathrroms)
+                .collect(Collectors.toList());
 
         propertyList = null;
+
 
         return propertyListWithRequiredBedroomsAndBathrooms;
     }
@@ -103,16 +72,9 @@ public class RealEstateServiceImpl implements RealEstateService{
 
         propertyList = this.realEstateRepository.findAll();
 
-        List<Property> propertyListWithinGivenBudget = new ArrayList<>();
-
-        for (Property property1:
-             propertyList) {
-
-            if(property1.getPropertyPrice() <= maxBudget) {
-
-                propertyListWithinGivenBudget.add(property1);
-            }
-        }
+        List<Property> propertyListWithinGivenBudget = propertyList.stream()
+                .filter(property1 -> property1.getPropertyPrice() <= maxBudget)
+                .collect(Collectors.toList());
 
         propertyList = null;
 
